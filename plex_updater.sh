@@ -4,11 +4,7 @@
 # Copyright (c) 2024 Brian Samson
 #
 # License: GNU General Public License v3.0 (GPL-3.0)
-# This script is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, 
-# either version 3 of the License, or (at your option) any later version.
-#
-# This script is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-# See the GNU General Public License for more details: https://www.gnu.org/licenses/gpl-3.0.html
+# See LICENSE for details.
 #
 # Requires sudo privileges
 
@@ -16,6 +12,7 @@
 PLEX_URL="https://plex.tv/api/downloads/5.json"
 TEMP_DIR="/tmp/plex_upgrade"
 PLEX_DEB="$TEMP_DIR/plexmediaserver.deb"
+LOG_FILE="/var/log/plex_upgrade.log"
 
 # Ensure the script is run as root
 if [[ $EUID -ne 0 ]]; then
@@ -23,42 +20,49 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+# Logging function with timestamps
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+}
+
 # Step 1: Prep temporary directory
 mkdir -p "$TEMP_DIR"
+log "Created temporary directory: $TEMP_DIR"
 
 # Step 2: Fetch latest Plex version URL
-echo "Checking for the latest Plex Media Server version..."
+log "Checking for the latest Plex Media Server version..."
 LATEST_URL=$(curl -s "$PLEX_URL" | jq -r '.computer.Linux.releases[] | select(.build == "linux-x86_64") | .url')
 
 if [[ -z $LATEST_URL ]]; then
-    echo "Failed to fetch Plex version info. Exiting." >&2
+    log "Failed to fetch Plex version info. Exiting."
     exit 1
 fi
 
-echo "Latest version found: $LATEST_URL"
+log "Latest version found: $LATEST_URL"
 
 # Step 3: Download the update
-echo "Downloading Plex Media Server..."
+log "Downloading Plex Media Server..."
 curl -L -o "$PLEX_DEB" "$LATEST_URL"
 
 if [[ ! -f $PLEX_DEB ]]; then
-    echo "Download failed. Exiting." >&2
+    log "Download failed. Exiting."
     exit 1
 fi
+log "Download completed."
 
 # Step 4: Install the update
-echo "Installing Plex Media Server..."
-dpkg -i "$PLEX_DEB" >> /var/log/plex_upgrade.log 2>&1 || {
-    echo "Install failed—attempting dependency fix." >&2
-    apt-get -f install -y
+log "Installing Plex Media Server..."
+dpkg -i "$PLEX_DEB" &>> "$LOG_FILE" || {
+    log "Install failed—attempting dependency fix."
+    apt-get -f install -y &>> "$LOG_FILE"
 }
 
 # Step 5: Cleanup
-echo "Removing temporary files..."
+log "Removing temporary files..."
 rm -rf "$TEMP_DIR"
 
 # Step 6: Restart Plex
-echo "Restarting Plex Media Server..."
+log "Restarting Plex Media Server..."
 systemctl restart plexmediaserver
 
-echo "Plex Media Server upgrade completed."
+log "Plex Media Server upgrade completed successfully."
