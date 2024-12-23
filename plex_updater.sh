@@ -29,19 +29,19 @@ log() {
 mkdir -p "$TEMP_DIR"
 log "Created temporary directory: $TEMP_DIR"
 
-# Step 2: Fetch latest Plex version URL
+# Step 2: Fetch the latest Plex version URL
 log "Checking for the latest Plex Media Server version..."
-LATEST_URL=$(curl -s "$PLEX_URL" | jq -r '.computer.Linux.releases[] | select(.build == "linux-x86_64") | .url')
+LATEST_URL=$(curl -s "$PLEX_URL" | jq -r '.computer.Linux.releases[] | select(.build == "linux-x86_64" and .distro == "debian") | .url')
 
 if [[ -z $LATEST_URL ]]; then
     log "Failed to fetch Plex version info. Exiting."
     exit 1
 fi
 
-log "Latest version found: $LATEST_URL"
+log "Latest version URL: $LATEST_URL"
 
 # Step 3: Download the update
-log "Downloading Plex Media Server..."
+log "Downloading the latest Plex Media Server version..."
 curl -L -o "$PLEX_DEB" "$LATEST_URL"
 
 if [[ ! -f $PLEX_DEB ]]; then
