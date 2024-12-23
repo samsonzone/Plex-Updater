@@ -92,7 +92,7 @@ Installation logs are stored in:
 
 ## License
 This project is licensed under the **GNU General Public License v3.0**.  
-See the [LICENSE](LICENSE) file for details.  
+See the [LICENSE](https://github.com/bmsam/Plex-Updater/blob/main/license) file for details.  
 
 ---
 
