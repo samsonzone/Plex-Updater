@@ -4,7 +4,7 @@
 
 ## Tested Environment
 - **OS:** Ubuntu Server 24.04.1  
-- **Script Name:** `plex_auto_updater.sh`  
+- **Script Name:** `plex_updater.sh`  
 
 ## Features
 - Fetches the latest Plex Media Server version from the official API.  
